@@ -29,7 +29,6 @@ export class Obstacles {
     side: THREE.DoubleSide,
   });
 
-  private cartBodyGeo = new THREE.BoxGeometry(WORLD.roadWidth - 0.6, 1.2, 1.8);
   private cartBodyMat = new THREE.MeshLambertMaterial({ color: COLORS.cartBrown });
   private wheelGeo = new THREE.CylinderGeometry(0.5, 0.5, 0.2, 12);
   private wheelMat = new THREE.MeshLambertMaterial({ color: 0x2a1a0a });
@@ -73,14 +72,11 @@ export class Obstacles {
     else if (r < 0.7) kind = 'high';
     else kind = 'full';
 
-    if (kind === 'full') {
-      this.spawnCart(z);
-    } else {
-      // einzelne Bahn
-      const lane = Math.floor(this.rng() * 3);
-      if (kind === 'low') this.spawnPillarChunk(z, lane);
-      else this.spawnBanner(z, lane);
-    }
+    // alle drei Typen liegen jetzt auf genau einer Bahn
+    const lane = Math.floor(this.rng() * 3);
+    if (kind === 'low') this.spawnPillarChunk(z, lane);
+    else if (kind === 'high') this.spawnBanner(z, lane);
+    else this.spawnCart(z, lane);
 
     // Nächster Spawn-Abstand - bei höherer Geschwindigkeit etwas größer,
     // damit es spielbar bleibt
@@ -147,16 +143,18 @@ export class Obstacles {
     this.active.push({ mesh: group, kind: 'high', lane, hitbox: hb });
   }
 
-  private spawnCart(z: number) {
+  private spawnCart(z: number, lane: number) {
     const cart = new THREE.Group();
 
-    const body = new THREE.Mesh(this.cartBodyGeo, this.cartBodyMat);
+    // Wagenkasten - 1.8 breit, passt in eine 2.2 breite Bahn
+    const bodyGeo = new THREE.BoxGeometry(1.8, 1.2, 1.8);
+    const body = new THREE.Mesh(bodyGeo, this.cartBodyMat);
     body.position.y = 1;
     body.castShadow = true;
     cart.add(body);
 
-    // 4 Räder
-    for (const dx of [-2.2, 2.2]) {
+    // 4 Räder - eng am Wagen
+    for (const dx of [-0.95, 0.95]) {
       for (const dz of [-0.6, 0.6]) {
         const wheel = new THREE.Mesh(this.wheelGeo, this.wheelMat);
         wheel.rotation.z = Math.PI / 2;
@@ -167,25 +165,26 @@ export class Obstacles {
 
     // einfache Ladung
     const cargo = new THREE.Mesh(
-      new THREE.BoxGeometry(4, 0.6, 1.4),
+      new THREE.BoxGeometry(1.6, 0.6, 1.4),
       new THREE.MeshLambertMaterial({ color: 0x8b6a3a })
     );
     cargo.position.y = 1.9;
     cart.add(cargo);
 
-    cart.position.set(0, 0, z);
+    cart.position.set(LANE_X[lane], 0, z);
 
-    // Cart-Hitbox: deckt fast die ganze Straßenbreite ab.
+    // Cart-Hitbox: eine Bahn breit, hoch genug dass Springen nicht hilft.
+    // Der Spieler muss auf eine der anderen zwei Bahnen wechseln.
     const hb = new THREE.Box3(
-      new THREE.Vector3(-(WORLD.roadWidth - 0.6) / 2, 0.3, z - 1),
-      new THREE.Vector3((WORLD.roadWidth - 0.6) / 2, 2.3, z + 1)
+      new THREE.Vector3(LANE_X[lane] - 1.0, 0, z - 1),
+      new THREE.Vector3(LANE_X[lane] + 1.0, 3.5, z + 1)
     );
 
     this.group.add(cart);
     this.active.push({
       mesh: cart,
       kind: 'full',
-      lane: -1,
+      lane,
       hitbox: hb,
     });
   }

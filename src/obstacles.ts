@@ -135,8 +135,8 @@ export class Obstacles {
     // Cloth ist 1.6 breit, 1.2 hoch, zentriert auf y=2.6 -> y=2.0..3.2
     // In Welt-Koords also lane-x, 2..3.2, z (Tiefe ist quasi 0)
     const hb = new THREE.Box3(
-      new THREE.Vector3(LANE_X[lane] - 0.8, 1.5, z - 0.2),
-      new THREE.Vector3(LANE_X[lane] + 0.8, 1.5, z + 0.2)
+      new THREE.Vector3(LANE_X[lane] - 0.8, 2.0, z - 0.2),
+      new THREE.Vector3(LANE_X[lane] + 0.8, 3.2, z + 0.2)
     );
 
     this.group.add(group);

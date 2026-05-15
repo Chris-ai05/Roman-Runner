@@ -10,6 +10,7 @@ export class UI {
   private finalDistance = document.getElementById('final-distance') as HTMLElement;
   private finalCoins = document.getElementById('final-coins') as HTMLElement;
   private highscoreEl = document.getElementById('highscore') as HTMLElement;
+  private mountEl = document.getElementById('mount-timer') as HTMLElement | null;
 
   onStart(cb: () => void) {
     this.startBtn.addEventListener('click', cb);
@@ -21,6 +22,17 @@ export class UI {
 
   setCoins(c: number) {
     this.coinsEl.textContent = c.toString();
+  }
+
+  /** Anzeige des Reit-Timers. seconds=0 versteckt die Anzeige. */
+  setMount(seconds: number) {
+    if (!this.mountEl) return;
+    if (seconds > 0) {
+      this.mountEl.style.display = 'block';
+      this.mountEl.textContent = `🐎 ${Math.ceil(seconds)}s`;
+    } else {
+      this.mountEl.style.display = 'none';
+    }
   }
 
   showStart() {

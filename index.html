@@ -163,6 +163,26 @@
       }
 
       .highscore strong { color: var(--gold); }
+
+      #mount-timer {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(180deg, rgba(212, 175, 55, 0.95), rgba(166, 130, 34, 0.85));
+        color: #1a1208;
+        border: 2px solid #fff5d0;
+        padding: 10px 24px;
+        border-radius: 32px;
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        z-index: 15;
+        pointer-events: none;
+        display: none;
+        box-shadow: 0 0 40px rgba(212, 175, 55, 0.6);
+        top: 100px;
+      }
     </style>
   </head>
   <body>
@@ -178,6 +198,8 @@
         <div class="hud-value" id="coins">0</div>
       </div>
     </div>
+
+    <div id="mount-timer">🐎 10s</div>
 
     <div id="overlay">
       <div class="title">Roman Runner</div>

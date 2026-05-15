@@ -362,11 +362,15 @@ export class Player {
         this.duckT = 0;
       }
     }
-    const duckPhase = this.isDucking
-      ? this.duckT < 0.5
-        ? this.duckT * 2
-        : (1 - this.duckT) * 2
-      : 0;
+    // Profil: 0..0.15 = Runter, 0.15..0.85 = halten, 0.85..1 = Hoch.
+    // Dadurch ist der Spieler den Großteil der Duck-Phase wirklich klein,
+    // statt nur in einem einzigen Frame.
+    let duckPhase = 0;
+    if (this.isDucking) {
+      if (this.duckT < 0.15) duckPhase = this.duckT / 0.15;
+      else if (this.duckT < 0.85) duckPhase = 1;
+      else duckPhase = (1 - this.duckT) / 0.15;
+    }
     this.torso.rotation.x = duckPhase * 0.9;
     const baseHip = PLAYER.size * 0.9;
     this.torso.position.y = baseHip - duckPhase * PLAYER.size * 0.35;
@@ -399,7 +403,7 @@ export class Player {
 
   private updateHitbox(duckPhase: number) {
     const p = this.mesh.position;
-    const currentHeight = this.bodyHeight * (1 - duckPhase * 0.45);
+    const currentHeight = this.bodyHeight * (1 - duckPhase * 0.55);
     const halfX = PLAYER.size * 0.4;
     const halfZ = PLAYER.size * 0.35;
     this.hitbox.min.set(p.x - halfX, p.y, p.z - halfZ);

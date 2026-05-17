@@ -66,21 +66,57 @@ export class Obstacles {
 
   private spawnNext(speed: number) {
     const z = this.nextSpawnZ;
-    const r = this.rng();
-    let kind: ObstacleKind;
-    if (r < 0.4) kind = 'low';
-    else if (r < 0.7) kind = 'high';
-    else kind = 'full';
 
-    // alle drei Typen liegen jetzt auf genau einer Bahn
-    const lane = Math.floor(this.rng() * 3);
-    if (kind === 'low') this.spawnPillarChunk(z, lane);
-    else if (kind === 'high') this.spawnBanner(z, lane);
-    else this.spawnCart(z, lane);
+    // Wellengröße bestimmen: 1, 2 oder 3 Hindernisse auf gleicher Z-Höhe.
+    const waveRoll = this.rng();
+    let waveSize: 1 | 2 | 3;
+    if (waveRoll < 0.5) waveSize = 1;
+    else if (waveRoll < 0.85) waveSize = 2;
+    else waveSize = 3;
 
-    // Nächster Spawn-Abstand - bei höherer Geschwindigkeit etwas größer,
-    // damit es spielbar bleibt
-    const minGap = 12 + speed * 0.15;
+    // Welche Bahnen werden besetzt? Wir shuffeln [0,1,2] und nehmen die ersten N.
+    const lanes = [0, 1, 2];
+    // Fisher-Yates partial shuffle
+    for (let i = lanes.length - 1; i > 0; i--) {
+      const j = Math.floor(this.rng() * (i + 1));
+      [lanes[i], lanes[j]] = [lanes[j], lanes[i]];
+    }
+    const chosenLanes = lanes.slice(0, waveSize);
+
+    // Für jede Bahn einen Hindernis-Typ würfeln.
+    // Verteilung: 40% low, 30% high, 30% full (cart).
+    const kinds: ObstacleKind[] = chosenLanes.map(() => {
+      const r = this.rng();
+      if (r < 0.4) return 'low';
+      if (r < 0.7) return 'high';
+      return 'full';
+    });
+
+    // Regel: bei einer Dreier-Welle dürfen niemals alle 3 Karren sein -
+    // sonst wäre die Welle unspielbar (Karren sind unüberwindbar).
+    // Bei 1 oder 2 Karren ist alles ok.
+    if (waveSize === 3) {
+      const cartCount = kinds.filter(k => k === 'full').length;
+      if (cartCount === 3) {
+        // Einen zufälligen Karren durch low oder high ersetzen.
+        const idxToReplace = Math.floor(this.rng() * 3);
+        kinds[idxToReplace] = this.rng() < 0.5 ? 'low' : 'high';
+      }
+    }
+
+    // Jetzt alle Hindernisse spawnen.
+    for (let i = 0; i < chosenLanes.length; i++) {
+      const lane = chosenLanes[i];
+      const kind = kinds[i];
+      if (kind === 'low') this.spawnPillarChunk(z, lane);
+      else if (kind === 'high') this.spawnBanner(z, lane);
+      else this.spawnCart(z, lane);
+    }
+
+    // Nächster Spawn-Abstand - bei größeren Wellen etwas mehr Platz lassen,
+    // damit der Spieler Zeit zum Reagieren hat. Außerdem mit Geschwindigkeit
+    // wachsend, damit es bei Topspeed spielbar bleibt.
+    const minGap = 12 + speed * 0.15 + (waveSize - 1) * 3;
     const gap = minGap + this.rng() * 10;
     this.nextSpawnZ -= gap;
   }
